@@ -16,13 +16,35 @@ import { doPolygonsIntersect } from "./util";
 const WIDTH = 1920;
 const HEIGHT = 1080;
 
-async function loadTextures() {
-  return {
-    shovel: await Assets.load<Texture>("./shovel.png"),
-    zombie: await Assets.load<Texture>("./zombie.png"),
-    frame: await Assets.load<Texture>("./frame.png"),
-    doggo: await Assets.load<Texture>("./doggo.png"),
+type Assets = {
+  shovel: Texture;
+  zombie: Texture;
+  frame: Texture;
+  doggo: Texture;
+  woof1: HTMLAudioElement;
+  woof2: HTMLAudioElement;
+  woof3: HTMLAudioElement;
+  grunt1: HTMLAudioElement;
+  grunt2: HTMLAudioElement;
+  grunt3: HTMLAudioElement;
+};
+async function loadTextures(): Promise<Assets> {
+  const obj = {
+    shovel: Assets.load<Texture>("./shovel.png"),
+    zombie: Assets.load<Texture>("./zombie.png"),
+    frame: Assets.load<Texture>("./frame.png"),
+    doggo: Assets.load<Texture>("./doggo.png"),
+    woof1: new Audio("./woof1.mp3"),
+    woof2: new Audio("./woof2.mp3"),
+    woof3: new Audio("./woof3.mp3"),
+    grunt1: new Audio("./grunt1.mp3"),
+    grunt2: new Audio("./grunt2.mp3"),
+    grunt3: new Audio("./grunt3.mp3"),
   };
+  const keys = Object.keys(obj);
+  return Object.fromEntries(
+    (await Promise.all(Object.values(obj))).map((v, i) => [keys[i], v] as const)
+  ) as Assets;
 }
 export class Game {
   textures!: Awaited<ReturnType<typeof loadTextures>>;
@@ -178,8 +200,13 @@ class Zombie {
   container: Container;
   ticker: Ticker;
   type: "zombie" | "doggo" = Math.random() > 0.5 ? "zombie" : "doggo";
-  constructor(game: Game) {
+  speed = this.type === "zombie" ? 1 : 2;
+  nextSound: number = 0;
+  soundInterval = [3000, 10000];
+  sound: HTMLAudioElement | null = null;
+  constructor(private game: Game) {
     this.container = new Container();
+    this.updateNextSound();
     Zombie.zombies.push(this);
     game.mainContainer.addChild(this.container);
     const zombie = new Sprite(game.textures[this.type]);
@@ -206,15 +233,65 @@ class Zombie {
     }
     this.container.addChild(zombie);
     this.ticker = new Ticker().add((time) => {
+      if (this.nextSound < performance.now()) {
+        this.playSound();
+      }
+      if (this.sound && !this.sound.ended) {
+        if (this.type === "doggo") {
+          zombie.position = zombie.position.add(
+            new Point(
+              Math.cos(performance.now() / 60) * 1,
+              Math.sin(performance.now() / 100) * 2
+            )
+          );
+        } else if (this.type === "zombie") {
+          zombie.position = zombie.position.add(
+            new Point(
+              Math.cos(performance.now() / 24) * 2,
+              Math.sin(performance.now() / 10) * 2
+            )
+          );
+        }
+      }
       // move zombie towards main shovel container
       const direction = game.mainShovelPosition.subtract(
         this.container.position
       );
       this.container.position = this.container.position.add(
-        direction.normalize().multiplyScalar(1 * time.deltaTime)
+        direction.normalize().multiplyScalar(this.speed * time.deltaTime)
       );
     });
     this.ticker.start();
+  }
+  playSound() {
+    this.updateNextSound();
+    if (this.type === "doggo") {
+      const sound =
+        Math.random() > 0.33
+          ? this.game.textures.woof1
+          : Math.random() > 0.33
+          ? this.game.textures.woof2
+          : this.game.textures.woof3;
+      this.sound = sound;
+      sound.volume = 0.3;
+      sound.play();
+    } else if (this.type === "zombie") {
+      const sound =
+        Math.random() > 0.33
+          ? this.game.textures.grunt1
+          : Math.random() > 0.33
+          ? this.game.textures.grunt2
+          : this.game.textures.grunt3;
+      this.sound = sound;
+      sound.volume = 0.3;
+      sound.play();
+    }
+  }
+  updateNextSound() {
+    this.nextSound =
+      performance.now() +
+      Math.random() * (this.soundInterval[1] - this.soundInterval[0]) +
+      this.soundInterval[0];
   }
   destroy() {
     this.container.destroy();
