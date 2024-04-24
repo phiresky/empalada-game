@@ -18,10 +18,10 @@ const HEIGHT = 1080;
 
 async function loadTextures() {
   return {
-    shovel: await Assets.load<Texture>("/shovel.png"),
-    zombie: await Assets.load<Texture>("/zombie.png"),
-    frame: await Assets.load<Texture>("/frame.png"),
-    doggo: await Assets.load<Texture>("/doggo.png"),
+    shovel: await Assets.load<Texture>("./shovel.png"),
+    zombie: await Assets.load<Texture>("./zombie.png"),
+    frame: await Assets.load<Texture>("./frame.png"),
+    doggo: await Assets.load<Texture>("./doggo.png"),
   };
 }
 export class Game {
