@@ -38,7 +38,12 @@ export class Game {
     Object.assign(globalThis, { __PIXI_APP__: app });
 
     // Initialize the application
-    await app.init({ background: "#000000", resizeTo: window });
+    await app.init({
+      background: "#000000",
+      resizeTo: window,
+      autoDensity: true,
+      resolution: window.devicePixelRatio || 1,
+    });
 
     // Append the application canvas to the document body
     document.body.appendChild(app.canvas);
@@ -81,8 +86,25 @@ export class Game {
         (direction === "left" ? -1 : +1) * 0.03 * time.deltaTime;
     });
     app.renderer.on("resize", this.updateSizes.bind(this));
-    window.addEventListener("mousedown", (e) => this.shootShovel());
+    let isFirst = true;
+    function doFullscreen() {
+      if (isFirst) {
+        document.body.requestFullscreen({ navigationUI: "hide" });
+        try {
+          if ("lock" in screen.orientation)
+            (screen.orientation.lock as (x: string) => void)("landscape");
+        } catch (e) {
+          console.error(e);
+        }
+        isFirst = false;
+      }
+    }
+    window.addEventListener("mousedown", (e) => {
+      doFullscreen();
+      this.shootShovel();
+    });
     window.addEventListener("keydown", (e) => {
+      doFullscreen();
       console.log("keydown", e.key);
       if (e.key === " ") {
         this.shootShovel();
@@ -155,13 +177,12 @@ class Zombie {
   static zombies: Zombie[] = [];
   container: Container;
   ticker: Ticker;
+  type: "zombie" | "doggo" = Math.random() > 0.5 ? "zombie" : "doggo";
   constructor(game: Game) {
     this.container = new Container();
     Zombie.zombies.push(this);
     game.mainContainer.addChild(this.container);
-    const zombie = new Sprite(
-      Math.random() > 0.5 ? game.textures.zombie : game.textures.doggo
-    );
+    const zombie = new Sprite(game.textures[this.type]);
     zombie.scale.x = 0.5;
     zombie.scale.y = 0.5;
     zombie.pivot.x = zombie.width / zombie.scale.x / 2;
