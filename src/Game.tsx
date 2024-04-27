@@ -10,7 +10,7 @@ export class Game {
   mainShovelPosition = new Point(WIDTH / 2, HEIGHT);
   shovelHitbox = 200;
   livesDisplay: LivesDisplay;
-  lives = 1;
+  lives = 3;
   stats = {
     killed: 0,
   };

@@ -116,5 +116,6 @@ export class Zombie {
     this.container.destroy();
     this.ticker.destroy();
     Zombie.zombies.splice(Zombie.zombies.indexOf(this), 1);
+    this.game.stats.killed += 1;
   }
 }

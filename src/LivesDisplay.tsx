@@ -14,7 +14,7 @@ export class LivesDisplay {
       () => new Sprite(this.game.app.textures.heart)
     );
     this.layout = new Layout({ content, styles: { maxWidth: "100%" } });
-    this.layout.resize(240, 100);
+    this.layout.resize((240 / 3) * lives, 100);
     this.layout.x = 150;
     this.layout.y = 150;
     this.game.addChild(this.layout);

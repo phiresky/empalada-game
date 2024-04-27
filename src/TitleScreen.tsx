@@ -29,6 +29,22 @@ export class TitleScreen {
     title.position.x = WIDTH / 2;
     title.position.y = HEIGHT / 4;
     this.container.addChild(title);
+    const subtitle = new Text({
+      text: subtitleText,
+      style: {
+        align: "center",
+        fontFamily: "Graveyard BRK",
+        fontSize: 80,
+        fill: 9610385,
+      },
+    });
+    subtitle.pivot.x = subtitle.width / 2;
+    subtitle.pivot.y = subtitle.height / 2;
+    subtitle.position.x = WIDTH / 2;
+    subtitle.position.y =
+      title.position.y + title.height / 2 + subtitle.height / 2;
+    this.container.addChild(subtitle);
+
     this.addButton("Start Game", () => this.app.startGame());
     this.addButton("Fullscreen", () => this.app.goFullscreen());
   }
