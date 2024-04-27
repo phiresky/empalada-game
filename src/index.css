@@ -5,3 +5,9 @@ body {
   box-sizing: border-box;
   overflow: hidden;
 }
+
+/* load graveyard.woff2 file */
+@font-face {
+  font-family: "Graveyard BRK";
+  src: url("./GraveyardBrk-geLq.woff2") format("woff2");
+}
