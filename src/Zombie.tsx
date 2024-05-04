@@ -12,6 +12,7 @@ type EnemyConfig = {
   vibration: (time: number) => Point;
   gruntSounds: (a: Assets) => HTMLAudioElement[];
   deathSounds: (a: Assets) => HTMLAudioElement[];
+  deathTexture: (a: Assets) => Texture[];
 };
 const deathSounds = (a: Assets) => [a.death1, a.death2];
 const enemies: EnemyConfig[] = [
@@ -25,6 +26,7 @@ const enemies: EnemyConfig[] = [
       new Point(Math.cos(time / 24) * 2, Math.sin(time / 10) * 2),
     gruntSounds: (a) => [a.grunt1, a.grunt2, a.grunt3],
     deathSounds,
+    deathTexture: (a) => [a.zombie],
   },
   {
     name: "Doggo",
@@ -36,6 +38,7 @@ const enemies: EnemyConfig[] = [
       new Point(Math.cos(time / 60) * 1, Math.sin(time / 100) * 2),
     gruntSounds: (a) => [a.woof1, a.woof2, a.woof3],
     deathSounds,
+    deathTexture: (a) => [a.doggo],
   },
   {
     name: "Tortuga",
@@ -43,9 +46,11 @@ const enemies: EnemyConfig[] = [
     moveSpeed: 0.5,
     lootValue: 2,
     health: 3,
-    vibration: (_time) => new Point(0, 0),
-    gruntSounds: () => [],
+    vibration: (time) =>
+      new Point(Math.cos(time / 24) * 2, Math.sin(time / 10) * 2),
+    gruntSounds: (a) => [a.tortuga1, a.tortuga2, a.tortuga3],
     deathSounds,
+    deathTexture: (a) => [a.tortuga],
   },
 ];
 export class Zombie {
@@ -56,9 +61,11 @@ export class Zombie {
   nextSound: number = 0;
   soundInterval = [3000, 10000];
   sound: HTMLAudioElement | null = null;
+  health: number;
   constructor(private game: Game) {
     this.container = new Container();
     this.config = enemies[Math.floor(Math.random() * enemies.length)];
+    this.health = this.config.health;
     this.updateNextSound();
     Zombie.zombies.push(this);
     game.addChild(this.container);
@@ -126,6 +133,7 @@ export class Zombie {
       sound.volume = 0.3;
       sound.play();
     }
+    this.sound = sound;
   }
   updateNextSound() {
     this.nextSound =
@@ -133,13 +141,37 @@ export class Zombie {
       Math.random() * (this.soundInterval[1] - this.soundInterval[0]) +
       this.soundInterval[0];
   }
-  destroy() {
+  hit(hp: number) {
+    this.health -= hp;
+    this.playDeathSound();
+    if (this.health <= 0) this.destroy();
+  }
+  playDeathSound() {
     const sounds = this.config.deathSounds(this.game.app.assets);
     sounds[Math.floor(Math.random() * sounds.length)].play();
+  }
+  destroy() {
+    const position = this.container.position;
+    {
+      const deathTextures = this.config.deathTexture(this.game.app.assets);
+      const deathTexture =
+        deathTextures[Math.floor(Math.random() * deathTextures.length)];
+      if (deathTexture) {
+        const deathSprite = new Sprite(deathTexture);
+        deathSprite.pivot.x = deathSprite.width / 2;
+        deathSprite.pivot.y = deathSprite.height / 4;
+        deathSprite.scale.y = -0.25;
+        deathSprite.scale.x = 0.5;
+        deathSprite.x = this.container.x;
+        deathSprite.y = this.container.y;
+        this.game.destroyedEnemies.addChild(deathSprite);
+      }
+    }
     this.container.destroy();
     this.ticker.destroy();
     Zombie.zombies.splice(Zombie.zombies.indexOf(this), 1);
     this.game.stats.killed += 1;
-    this.game.increaseMoney(this.config.lootValue);
+
+    this.game.increaseMoney(this.config.lootValue, position);
   }
 }

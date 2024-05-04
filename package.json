@@ -12,6 +12,7 @@
   "dependencies": {
     "@pixi/layout": "^2.0.0",
     "@pixi/ui": "^2.0.1",
+    "gsap": "^3.12.5",
     "pixi.js": "^8.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

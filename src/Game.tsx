@@ -12,15 +12,20 @@ export class Game {
   shovelHitbox = 200;
   livesDisplay: LivesDisplay;
   moneyDisplay: MoneyDisplay;
+  destroyedEnemies: Container;
+
   lives = 3;
+  targetMoney = 10;
   stats = {
     killed: 0,
   };
   constructor(public app: App) {
     this.container = new Container();
     app.mainContainer.addChild(this.container);
+    this.destroyedEnemies = new Container();
+    this.addChild(this.destroyedEnemies);
     this.livesDisplay = new LivesDisplay(this, this.lives);
-    this.moneyDisplay = new MoneyDisplay(this, 0);
+    this.moneyDisplay = new MoneyDisplay(this, 0, this.targetMoney);
     const frame = new Sprite(app.assets.frame);
     frame.zIndex = 10;
     this.addChild(frame);
@@ -62,8 +67,8 @@ export class Game {
       }
     });
   }
-  increaseMoney(amount: number) {
-    this.moneyDisplay.updateMoney(this.moneyDisplay.money + amount);
+  increaseMoney(amount: number, sourcePosition: Point) {
+    this.moneyDisplay.addMoney(amount, sourcePosition);
   }
   loseLife() {
     console.log("lose life");
@@ -105,6 +110,7 @@ export class Game {
     const ticker = new Ticker().add((time) => {
       child.y += 10 * time.deltaTime;
       if (child.y > WIDTH) {
+        ticker.started && ticker.destroy();
         ticker.destroy();
         shovel.destroy();
       }
@@ -112,7 +118,7 @@ export class Game {
         if (collision(zombie.container, child)) {
           ticker.started && ticker.destroy();
           shovel.destroy();
-          zombie.destroy();
+          zombie.hit(1);
         }
       }
     });

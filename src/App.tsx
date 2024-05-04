@@ -5,13 +5,13 @@ import { doPolygonsIntersect } from "./util";
 import { TitleScreen } from "./TitleScreen";
 import { Game } from "./Game";
 import { LoseScreen } from "./LoseScreen";
-import { loadAssets } from "./assets";
+import { Assets, loadAssets } from "./assets";
 
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
 
 export class App {
-  assets!: Awaited<ReturnType<typeof loadAssets>>;
+  assets!: Assets;
   mainContainer!: Container;
   app!: Application;
   screen = { width: WIDTH, height: HEIGHT };
