@@ -11,7 +11,9 @@ type EnemyConfig = {
   health: number;
   vibration: (time: number) => Point;
   gruntSounds: (a: Assets) => HTMLAudioElement[];
+  deathSounds: (a: Assets) => HTMLAudioElement[];
 };
+const deathSounds = (a: Assets) => [a.death1, a.death2];
 const enemies: EnemyConfig[] = [
   {
     name: "Zombie",
@@ -22,6 +24,7 @@ const enemies: EnemyConfig[] = [
     vibration: (time) =>
       new Point(Math.cos(time / 24) * 2, Math.sin(time / 10) * 2),
     gruntSounds: (a) => [a.grunt1, a.grunt2, a.grunt3],
+    deathSounds,
   },
   {
     name: "Doggo",
@@ -32,6 +35,7 @@ const enemies: EnemyConfig[] = [
     vibration: (time) =>
       new Point(Math.cos(time / 60) * 1, Math.sin(time / 100) * 2),
     gruntSounds: (a) => [a.woof1, a.woof2, a.woof3],
+    deathSounds,
   },
   {
     name: "Tortuga",
@@ -41,6 +45,7 @@ const enemies: EnemyConfig[] = [
     health: 3,
     vibration: (_time) => new Point(0, 0),
     gruntSounds: () => [],
+    deathSounds,
   },
 ];
 export class Zombie {
@@ -129,6 +134,8 @@ export class Zombie {
       this.soundInterval[0];
   }
   destroy() {
+    const sounds = this.config.deathSounds(this.game.app.assets);
+    sounds[Math.floor(Math.random() * sounds.length)].play();
     this.container.destroy();
     this.ticker.destroy();
     Zombie.zombies.splice(Zombie.zombies.indexOf(this), 1);
