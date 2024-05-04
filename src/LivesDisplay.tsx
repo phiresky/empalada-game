@@ -11,7 +11,7 @@ export class LivesDisplay {
   updateLives(lives: number) {
     if (this.layout) this.layout.destroy();
     const content = Array.from({ length: lives }).map(
-      () => new Sprite(this.game.app.textures.heart)
+      () => new Sprite(this.game.app.assets.heart)
     );
     this.layout = new Layout({ content, styles: { maxWidth: "100%" } });
     this.layout.resize((240 / 3) * lives, 100);

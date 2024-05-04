@@ -1,62 +1,23 @@
-import {
-  Application,
-  Assets,
-  Container,
-  Graphics,
-  Point,
-  Rectangle,
-  Texture,
-} from "pixi.js";
+import { Application, Container, Graphics, Point, Rectangle } from "pixi.js";
 import "pixi.js/math-extras";
 import "./index.css";
 import { doPolygonsIntersect } from "./util";
 import { TitleScreen } from "./TitleScreen";
 import { Game } from "./Game";
 import { LoseScreen } from "./LoseScreen";
+import { loadAssets } from "./assets";
 
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
 
-type Assets = {
-  shovel: Texture;
-  zombie: Texture;
-  frame: Texture;
-  doggo: Texture;
-  heart: Texture;
-  woof1: HTMLAudioElement;
-  woof2: HTMLAudioElement;
-  woof3: HTMLAudioElement;
-  grunt1: HTMLAudioElement;
-  grunt2: HTMLAudioElement;
-  grunt3: HTMLAudioElement;
-};
-async function loadTextures(): Promise<Assets> {
-  const obj = {
-    shovel: Assets.load<Texture>("./shovel.png"),
-    zombie: Assets.load<Texture>("./zombie.png"),
-    frame: Assets.load<Texture>("./frame.png"),
-    doggo: Assets.load<Texture>("./doggo.png"),
-    heart: Assets.load<Texture>("./heart.png"),
-    woof1: new Audio("./woof1.mp3"),
-    woof2: new Audio("./woof2.mp3"),
-    woof3: new Audio("./woof3.mp3"),
-    grunt1: new Audio("./grunt1.mp3"),
-    grunt2: new Audio("./grunt2.mp3"),
-    grunt3: new Audio("./grunt3.mp3"),
-  };
-  const keys = Object.keys(obj);
-  return Object.fromEntries(
-    (await Promise.all(Object.values(obj))).map((v, i) => [keys[i], v] as const)
-  ) as Assets;
-}
 export class App {
-  textures!: Awaited<ReturnType<typeof loadTextures>>;
+  assets!: Awaited<ReturnType<typeof loadAssets>>;
   mainContainer!: Container;
   app!: Application;
   screen = { width: WIDTH, height: HEIGHT };
   currentScreen: Game | TitleScreen | LoseScreen | null = null;
   async init() {
-    this.textures = await loadTextures();
+    this.assets = await loadAssets();
     /*document.fonts.add(
       new FontFace("Graveyard BRK", "./GraveyardBrk-geLq.woff2")
     );*/

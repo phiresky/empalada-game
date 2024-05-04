@@ -1,22 +1,63 @@
-import { Container, Point, Sprite, Ticker } from "pixi.js";
+import { Container, Point, Sprite, Texture, Ticker } from "pixi.js";
 import { WIDTH, HEIGHT } from "./App";
 import { Game } from "./Game";
+import { Assets } from "./assets";
 
+type EnemyConfig = {
+  name: string;
+  texture: (a: Assets) => Texture;
+  moveSpeed: number;
+  lootValue: number;
+  health: number;
+  vibration: (time: number) => Point;
+  gruntSounds: (a: Assets) => HTMLAudioElement[];
+};
+const enemies: EnemyConfig[] = [
+  {
+    name: "Zombie",
+    texture: (a: Assets) => a.zombie,
+    moveSpeed: 1,
+    lootValue: 1,
+    health: 1,
+    vibration: (time) =>
+      new Point(Math.cos(time / 24) * 2, Math.sin(time / 10) * 2),
+    gruntSounds: (a) => [a.grunt1, a.grunt2, a.grunt3],
+  },
+  {
+    name: "Doggo",
+    texture: (a: Assets) => a.doggo,
+    moveSpeed: 2,
+    lootValue: 2,
+    health: 1,
+    vibration: (time) =>
+      new Point(Math.cos(time / 60) * 1, Math.sin(time / 100) * 2),
+    gruntSounds: (a) => [a.woof1, a.woof2, a.woof3],
+  },
+  {
+    name: "Tortuga",
+    texture: (a: Assets) => a.tortuga,
+    moveSpeed: 0.5,
+    lootValue: 2,
+    health: 3,
+    vibration: (_time) => new Point(0, 0),
+    gruntSounds: () => [],
+  },
+];
 export class Zombie {
   static zombies: Zombie[] = [];
   container: Container;
   ticker: Ticker;
-  type: "zombie" | "doggo" = Math.random() > 0.5 ? "zombie" : "doggo";
-  speed = this.type === "zombie" ? 1 : 2;
+  config: EnemyConfig;
   nextSound: number = 0;
   soundInterval = [3000, 10000];
   sound: HTMLAudioElement | null = null;
   constructor(private game: Game) {
     this.container = new Container();
+    this.config = enemies[Math.floor(Math.random() * enemies.length)];
     this.updateNextSound();
     Zombie.zombies.push(this);
     game.addChild(this.container);
-    const zombie = new Sprite(game.app.textures[this.type]);
+    const zombie = new Sprite(this.config.texture(game.app.assets));
     zombie.scale.x = 0.5;
     zombie.scale.y = 0.5;
     zombie.pivot.x = zombie.width / zombie.scale.x / 2;
@@ -44,28 +85,18 @@ export class Zombie {
         this.playSound();
       }
       if (this.sound && !this.sound.ended) {
-        if (this.type === "doggo") {
-          zombie.position = zombie.position.add(
-            new Point(
-              Math.cos(performance.now() / 60) * 1,
-              Math.sin(performance.now() / 100) * 2
-            )
-          );
-        } else if (this.type === "zombie") {
-          zombie.position = zombie.position.add(
-            new Point(
-              Math.cos(performance.now() / 24) * 2,
-              Math.sin(performance.now() / 10) * 2
-            )
-          );
-        }
+        zombie.position = zombie.position.add(
+          this.config.vibration(performance.now())
+        );
       }
       // move zombie towards main shovel container
       const direction = game.mainShovelPosition.subtract(
         this.container.position
       );
       this.container.position = this.container.position.add(
-        direction.normalize().multiplyScalar(this.speed * time.deltaTime)
+        direction
+          .normalize()
+          .multiplyScalar(this.config.moveSpeed * time.deltaTime)
       );
       // check shovel hitbox
       const zombieSize = (zombie.width + zombie.height) / 2 / 2;
@@ -83,25 +114,10 @@ export class Zombie {
   }
   playSound() {
     this.updateNextSound();
-    const textures = this.game.app.textures;
-    if (this.type === "doggo") {
-      const sound =
-        Math.random() > 0.33
-          ? textures.woof1
-          : Math.random() > 0.33
-          ? textures.woof2
-          : textures.woof3;
-      this.sound = sound;
-      sound.volume = 0.3;
-      sound.play();
-    } else if (this.type === "zombie") {
-      const sound =
-        Math.random() > 0.33
-          ? textures.grunt1
-          : Math.random() > 0.33
-          ? textures.grunt2
-          : textures.grunt3;
-      this.sound = sound;
+    const textures = this.game.app.assets;
+    const sounds = this.config.gruntSounds(textures);
+    const sound = sounds[Math.floor(Math.random() * sounds.length)];
+    if (sound) {
       sound.volume = 0.3;
       sound.play();
     }
@@ -117,5 +133,6 @@ export class Zombie {
     this.ticker.destroy();
     Zombie.zombies.splice(Zombie.zombies.indexOf(this), 1);
     this.game.stats.killed += 1;
+    this.game.increaseMoney(this.config.lootValue);
   }
 }

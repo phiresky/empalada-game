@@ -2,6 +2,7 @@ import { Container, Graphics, Point, Sprite, Ticker } from "pixi.js";
 import { Zombie } from "./Zombie";
 import { WIDTH, HEIGHT, App, collision } from "./App";
 import { LivesDisplay } from "./LivesDisplay";
+import { MoneyDisplay } from "./MoneyDisplay";
 
 export class Game {
   container: Container;
@@ -10,6 +11,7 @@ export class Game {
   mainShovelPosition = new Point(WIDTH / 2, HEIGHT);
   shovelHitbox = 200;
   livesDisplay: LivesDisplay;
+  moneyDisplay: MoneyDisplay;
   lives = 3;
   stats = {
     killed: 0,
@@ -18,7 +20,8 @@ export class Game {
     this.container = new Container();
     app.mainContainer.addChild(this.container);
     this.livesDisplay = new LivesDisplay(this, this.lives);
-    const frame = new Sprite(app.textures.frame);
+    this.moneyDisplay = new MoneyDisplay(this, 0);
+    const frame = new Sprite(app.assets.frame);
     frame.zIndex = 10;
     this.addChild(frame);
     this.drawShovelFrame();
@@ -58,6 +61,9 @@ export class Game {
         this.shootShovel();
       }
     });
+  }
+  increaseMoney(amount: number) {
+    this.moneyDisplay.updateMoney(this.moneyDisplay.money + amount);
   }
   loseLife() {
     console.log("lose life");
@@ -116,7 +122,7 @@ export class Game {
     const shovelContainer = new Container();
     this.addChild(shovelContainer);
 
-    const throwShovel = new Sprite(this.app.textures.shovel);
+    const throwShovel = new Sprite(this.app.assets.shovel);
     throwShovel.scale.x = 0.3;
     throwShovel.scale.y = 0.3;
     shovelContainer.addChild(throwShovel);
