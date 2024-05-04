@@ -10,15 +10,7 @@ export class TitleScreen {
     {
       titleText = "Empalada",
       subtitleText = "Graveyard Shift",
-      buttons = (s: TitleScreen) => {
-        s.addButton("Start Game", () => this.app.startGame());
-        s.addButton("Fullscreen", () => this.app.goFullscreen());
-      },
-    }: {
-      titleText?: string;
-      subtitleText?: string;
-      buttons?: (s: TitleScreen) => void;
-    } = {}
+    }: { titleText?: string; subtitleText?: string } = {}
   ) {
     this.container = new Container();
     app.mainContainer.addChild(this.container);
@@ -52,12 +44,17 @@ export class TitleScreen {
     subtitle.position.y =
       title.position.y + title.height / 2 + subtitle.height / 2;
     this.container.addChild(subtitle);
-    buttons(this);
+
+    this.addButton("Start Game", () => this.app.startGame());
+    this.addButton("Fullscreen", () => this.app.goFullscreen());
   }
   destroy() {
     this.container.destroy();
   }
   addButton(text: string, callback: () => void) {
+    const button = new ButtonContainer(
+      new Graphics().roundRect(-200, -80, 400, 160, 15).fill(2436397)
+    );
     const btnText = new Text({
       text,
       style: {
@@ -67,13 +64,8 @@ export class TitleScreen {
         fill: 12437176,
       },
     });
-
     btnText.pivot.x = btnText.width / 2;
     btnText.pivot.y = btnText.height / 2;
-    const width = btnText.width + 50;
-    const button = new ButtonContainer(
-      new Graphics().roundRect(-width / 2, -80, width, 160, 15).fill(2436397)
-    );
     button.addChild(btnText);
     // button.pivot.x = button.width / 2;
     // button.pivot.y = button.height / 2;

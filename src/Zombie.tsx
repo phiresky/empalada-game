@@ -2,6 +2,7 @@ import { Container, Point, Sprite, Texture, Ticker } from "pixi.js";
 import { WIDTH, HEIGHT } from "./App";
 import { Game } from "./Game";
 import { Assets } from "./assets";
+import { GameObject } from "./GameObject";
 
 type EnemyConfig = {
   name: string;
@@ -53,22 +54,21 @@ const enemies: EnemyConfig[] = [
     deathTexture: (a) => [a.tortuga],
   },
 ];
-export class Zombie {
+export class Zombie extends GameObject {
   static zombies: Zombie[] = [];
-  container: Container;
-  ticker: Ticker;
   config: EnemyConfig;
   nextSound: number = 0;
   soundInterval = [3000, 10000];
   sound: HTMLAudioElement | null = null;
   health: number;
-  constructor(private game: Game) {
-    this.container = new Container();
+  zombieSprite: Sprite;
+  constructor(game: Game) {
+    super(game);
     this.config = enemies[Math.floor(Math.random() * enemies.length)];
     this.health = this.config.health;
     this.updateNextSound();
     Zombie.zombies.push(this);
-    game.addChild(this.container);
+    game.enemies.addChild(this.container);
     const zombie = new Sprite(this.config.texture(game.app.assets));
     zombie.scale.x = 0.5;
     zombie.scale.y = 0.5;
@@ -92,37 +92,37 @@ export class Zombie {
       zombie.scale.x *= -1;
     }
     this.container.addChild(zombie);
-    this.ticker = new Ticker().add((time) => {
-      if (this.nextSound < performance.now()) {
-        this.playSound();
-      }
-      if (this.sound && !this.sound.ended) {
-        zombie.position = zombie.position.add(
-          this.config.vibration(performance.now())
-        );
-      }
-      // move zombie towards main shovel container
-      const direction = game.mainShovelPosition.subtract(
-        this.container.position
+    this.zombieSprite = zombie;
+  }
+  onUpdate(time: Ticker) {
+    const zombie = this.zombieSprite;
+    const game = this.game;
+    if (this.nextSound < performance.now()) {
+      this.playSound();
+    }
+    if (this.sound && !this.sound.ended) {
+      zombie.position = zombie.position.add(
+        this.config.vibration(performance.now())
       );
-      this.container.position = this.container.position.add(
-        direction
-          .normalize()
-          .multiplyScalar(this.config.moveSpeed * time.deltaTime)
-      );
-      // check shovel hitbox
-      const zombieSize = (zombie.width + zombie.height) / 2 / 2;
-      if (
-        this.container.position
-          .subtract(this.game.mainShovelPosition)
-          .magnitude() <
-        this.game.shovelHitbox + zombieSize
-      ) {
-        this.destroy();
-        this.game.loseLife();
-      }
-    });
-    this.ticker.start();
+    }
+    // move zombie towards main shovel container
+    const direction = game.mainShovelPosition.subtract(this.container.position);
+    this.container.position = this.container.position.add(
+      direction
+        .normalize()
+        .multiplyScalar(this.config.moveSpeed * time.deltaTime)
+    );
+    // check shovel hitbox
+    const zombieSize = (zombie.width + zombie.height) / 2 / 2;
+    if (
+      this.container.position
+        .subtract(this.game.mainShovelPosition)
+        .magnitude() <
+      this.game.shovelHitbox + zombieSize
+    ) {
+      this.destroy();
+      this.game.loseLife();
+    }
   }
   playSound() {
     this.updateNextSound();
@@ -150,7 +150,7 @@ export class Zombie {
     const sounds = this.config.deathSounds(this.game.app.assets);
     sounds[Math.floor(Math.random() * sounds.length)].play();
   }
-  destroy() {
+  onDestroy() {
     const position = this.container.position;
     {
       const deathTextures = this.config.deathTexture(this.game.app.assets);
@@ -167,8 +167,6 @@ export class Zombie {
         this.game.destroyedEnemies.addChild(deathSprite);
       }
     }
-    this.container.destroy();
-    this.ticker.destroy();
     Zombie.zombies.splice(Zombie.zombies.indexOf(this), 1);
     this.game.stats.killed += 1;
 

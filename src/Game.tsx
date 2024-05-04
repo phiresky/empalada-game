@@ -3,16 +3,19 @@ import { Zombie } from "./Zombie";
 import { WIDTH, HEIGHT, App, collision } from "./App";
 import { LivesDisplay } from "./LivesDisplay";
 import { MoneyDisplay } from "./MoneyDisplay";
+import gsap from "gsap";
+import { TitleScreen } from "./TitleScreen";
 
 export class Game {
   container: Container;
-  ticker: Ticker;
+  inGameTicker: Ticker;
   mainShovel!: Container | null;
   mainShovelPosition = new Point(WIDTH / 2, HEIGHT);
   shovelHitbox = 200;
   livesDisplay: LivesDisplay;
   moneyDisplay: MoneyDisplay;
-  destroyedEnemies: Container;
+  destroyedEnemies!: Container;
+  enemies!: Container;
 
   lives = 3;
   targetMoney = 10;
@@ -21,9 +24,9 @@ export class Game {
   };
   constructor(public app: App) {
     this.container = new Container();
+    this.inGameTicker = new Ticker();
     app.mainContainer.addChild(this.container);
-    this.destroyedEnemies = new Container();
-    this.addChild(this.destroyedEnemies);
+    this.createLevelContainers();
     this.livesDisplay = new LivesDisplay(this, this.lives);
     this.moneyDisplay = new MoneyDisplay(this, 0, this.targetMoney);
     const frame = new Sprite(app.assets.frame);
@@ -35,11 +38,11 @@ export class Game {
     new Zombie(this);
 
     let direction = "left" as "left" | "right";
-    this.ticker = new Ticker();
-    this.ticker.start();
+
+    this.inGameTicker.start();
     let timePassed = 0;
     // Listen for animate update
-    this.ticker.add((time) => {
+    this.inGameTicker.add((time) => {
       timePassed += time.elapsedMS;
       if (timePassed > 2000) {
         new Zombie(this);
@@ -67,8 +70,38 @@ export class Game {
       }
     });
   }
+  createLevelContainers() {
+    if (this.enemies) this.enemies.destroy();
+    if (this.destroyedEnemies) this.destroyedEnemies.destroy();
+    this.destroyedEnemies = new Container();
+    this.enemies = new Container();
+    this.addChild(this.enemies);
+    this.enemies.addChild(this.destroyedEnemies);
+  }
   increaseMoney(amount: number, sourcePosition: Point) {
     this.moneyDisplay.addMoney(amount, sourcePosition);
+    if (this.moneyDisplay.money >= this.targetMoney) {
+      this.inGameTicker.stop();
+      gsap.to(this.enemies, {
+        alpha: 0,
+        duration: 3,
+        onComplete: () => {
+          this.createLevelContainers();
+          const s = new TitleScreen(this.app, {
+            titleText: "Jar-o-Bones filled!",
+            subtitleText: "Buy upgrades",
+            buttons: (s) => {
+              s.addButton("Upgrade Shovel", () => {});
+              s.addButton("Upgrade Zombies", () => {});
+              s.addButton("Next Level", () => {
+                s.destroy();
+                this.inGameTicker.start();
+              });
+            },
+          });
+        },
+      });
+    }
   }
   loseLife() {
     console.log("lose life");
@@ -92,7 +125,7 @@ export class Game {
   }
   destroy() {
     this.container.destroy();
-    this.ticker.destroy();
+    this.inGameTicker.destroy();
   }
   addChild(child: Container) {
     this.container.addChild(child);
