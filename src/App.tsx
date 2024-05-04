@@ -111,7 +111,7 @@ export function collision(zombie: Container, shovel: Container): boolean {
     new Point(b.x + b.width, b.y + b.height),
     new Point(b.x, b.y + b.height),
   ];
-  const matrix = shovel.worldTransform.append(zombie.worldTransform.invert()); //shovel.worldTransform.append(zombie.worldTransform.invert());
+  // const matrix = shovel.worldTransform.append(zombie.worldTransform.invert()); //shovel.worldTransform.append(zombie.worldTransform.invert());
   // return zombie.getLocalBounds().rectangle.intersects(b.rectangle, matrix);
   const zombieHitBox = new Rectangle(
     -zombie.width / 4,

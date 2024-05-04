@@ -1,4 +1,6 @@
-import { Point } from "@pixi/core";
+// import { Point } from "@pixi/core";
+
+import { Point } from "pixi.js";
 
 /**
  * Helper function to determine whether there is an intersection between the two polygons described

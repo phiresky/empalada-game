@@ -57,7 +57,7 @@ export class Game {
       this.mainShovel.rotation +=
         (direction === "left" ? -1 : +1) * 0.03 * time.deltaTime;
     });
-    window.addEventListener("mousedown", (e) => {
+    window.addEventListener("mousedown", (_e) => {
       this.shootShovel();
     });
     window.addEventListener("keydown", (e) => {
